@@ -18,7 +18,6 @@ function App() {
   }, [isLoggedIn]);
 
   const fetchTeams = () => {
-    // We send the email to the backend so it knows who is asking
     axios.get(`https://teamup-project.onrender.com/api/teams?email=${userEmail}`)
       .then(response => {
         setTeams(response.data);
@@ -26,7 +25,6 @@ function App() {
       .catch(error => console.error("Error connecting to server:", error));
   };
 
-  // --- LOGIC ---
   const handleLogin = () => {
     if (!emailInput) { alert("Please enter an email!"); return; }
     setUserEmail(emailInput);
@@ -34,7 +32,6 @@ function App() {
   };
 
   const handleJoin = (teamId) => {
-    // Optimistic update for UI
     const updatedTeams = teams.map(team => {
       if (team._id === teamId) {
         return { ...team, members: team.members + 1, joined: true };
@@ -46,15 +43,13 @@ function App() {
 
   const handleCreateTeam = () => {
     if (!newTeamName) return; 
-
     const newTeamData = {
       name: newTeamName,
       status: "Recruiting",
       members: 1,           
       joined: true,
-      owner: userEmail      // Stamping the team with your email
+      owner: userEmail      
     };
-
     axios.post('https://teamup-project.onrender.com/api/teams', newTeamData)
       .then(response => {
         setTeams([...teams, response.data]); 
@@ -63,20 +58,17 @@ function App() {
       .catch(error => console.error("Error creating team:", error));
   };
 
-  // --- RENDER ---
   return (
     <div className="container">
-      {/* 🌀 THE BACKGROUND ANIMATION */}
+      {/* 🌀 SPIRAL ANIMATION BACKGROUND */}
       <div className="background-spiral"></div>
-      
-      {/* HEADER (Always Visible) */}
+
       <header>
         <div className="logo">TeamUp.</div>
         {isLoggedIn && <div style={{fontSize: '0.9rem', color: '#888'}}>{userEmail}</div>}
       </header>
 
       {!isLoggedIn ? (
-        // --- LANDING PAGE VIEW ---
         <div className="hero-section">
           <h1 className="hero-title">Find. Connect. Build.</h1>
           <p className="hero-subtitle">The platform for developers to find their perfect team.</p>
@@ -92,6 +84,7 @@ function App() {
             <button className="primary-btn" onClick={handleLogin}>Continue with Email</button>
           </div>
 
+          {/* RESPONSIVE FEATURE GRID */}
           <div className="features-grid">
             <div className="feature-card">
               <h3>🚀 Find Teammates</h3>
@@ -112,7 +105,6 @@ function App() {
           </div>
         </div>
       ) : (
-        // --- DASHBOARD VIEW ---
         <div className="dashboard-content">
           <div className="dashboard-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'30px'}}>
             <h2>Your Dashboard</h2>
@@ -139,7 +131,6 @@ function App() {
                 <h3>{team.name}</h3>
                 <span className="status-badge" style={{display: 'inline-block', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', background: 'rgba(50, 145, 255, 0.1)', color: 'var(--accent-color)', marginBottom: '10px'}}>{team.status}</span>
                 <p style={{color: '#888', marginTop: '10px'}}>Members: {team.members}</p>
-                
                 <div style={{marginTop: '20px'}}>
                   {team.joined ? (
                     <button className="primary-btn" disabled style={{opacity: 0.5, cursor: 'default'}}>Joined</button>
