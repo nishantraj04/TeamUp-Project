@@ -25,7 +25,8 @@ const TeamSchema = new mongoose.Schema({
     name: String,
     status: String,
     members: Number,
-    joined: Boolean
+    joined: Boolean,
+    owner: String // <--- NEW: Remembers who owns this team
 });
 const TeamModel = mongoose.model("Team", TeamSchema);
 
@@ -53,16 +54,26 @@ const seedDatabase = async () => {
 
 // GET all teams
 app.get('/api/teams', async (req, res) => {
-    const teams = await TeamModel.find();
+    const userEmail = req.query.email; // Get the email from the URL (e.g., ?email=bob@gmail.com)
+
+    let teams;
+    if (userEmail) {
+        // If we know who is asking, only show THEIR teams
+        teams = await TeamModel.find({ owner: userEmail });
+    } else {
+        // Safety: If no email provided, show nothing (or everything, your choice)
+        teams = [];
+    }
     res.json(teams);
 });
 
 // CREATE A TEAM (Add this part!)
 app.post('/api/teams', async (req, res) => {
     try {
+        // We now expect the frontend to send { ..., owner: "user@email.com" }
         const newTeam = new TeamModel(req.body);
-        await newTeam.save(); // Save to MongoDB
-        res.json(newTeam);    // Send back the saved team
+        await newTeam.save();
+        res.json(newTeam);
     } catch (err) {
         res.status(500).json({ error: "Failed to save team" });
     }

@@ -8,15 +8,19 @@ function App() {
   const [emailInput, setEmailInput] = useState("");
   
   const [teams, setTeams] = useState([]);
-  const [newTeamName, setNewTeamName] = useState(""); // 🆕 State for the new team input
+  const [newTeamName, setNewTeamName] = useState(""); 
 
   // --- EFFECT ---
+  // Only fetch teams AFTER the user has logged in
   useEffect(() => {
-    fetchTeams();
-  }, []);
+    if (isLoggedIn) {
+      fetchTeams();
+    }
+  }, [isLoggedIn]); // This runs whenever 'isLoggedIn' changes
 
   const fetchTeams = () => {
-   axios.get('https://teamup-project.onrender.com/api/teams')
+    // 🆕 CHANGE 1: We send the email to the backend so it knows who is asking
+    axios.get(`https://teamup-project.onrender.com/api/teams?email=${userEmail}`)
       .then(response => {
         setTeams(response.data);
       })
@@ -42,21 +46,21 @@ function App() {
 
   // 🆕 FUNCTION: Create a Team
   const handleCreateTeam = () => {
-    if (!newTeamName) return; // Don't create empty teams
+    if (!newTeamName) return; 
 
     const newTeamData = {
       name: newTeamName,
-      status: "Recruiting", // Default status
-      members: 1,           // You are the first member
-      joined: true          // You automatically join your own team
+      status: "Recruiting",
+      members: 1,           
+      joined: true,
+      owner: userEmail      // 🆕 CHANGE 2: We stamp the team with your email
     };
 
     // Send to Backend
     axios.post('https://teamup-project.onrender.com/api/teams', newTeamData)
       .then(response => {
-        // Add the new team (from server) to our list immediately
         setTeams([...teams, response.data]); 
-        setNewTeamName(""); // Clear the input box
+        setNewTeamName(""); 
       })
       .catch(error => console.error("Error creating team:", error));
   };
@@ -79,8 +83,9 @@ function App() {
       ) : (
         <div className="card">
           <h2>Welcome, {userEmail}!</h2>
+          <p style={{fontSize: "0.9rem", color: "#666"}}>You are viewing your private dashboard.</p>
           
-          {/* 🆕 CREATE TEAM SECTION */}
+          {/* CREATE TEAM SECTION */}
           <div style={{marginBottom: '20px', padding: '15px', border: '1px dashed #666', borderRadius: '8px'}}>
             <h3>Create a New Team</h3>
             <input 
@@ -92,9 +97,9 @@ function App() {
             <button onClick={handleCreateTeam} style={{backgroundColor: '#28a745'}}>+ Create</button>
           </div>
 
-          <p>Available Teams:</p>
+          <p>Your Teams:</p>
           <div className="team-list">
-            {teams.length === 0 ? <p>Loading teams...</p> : null}
+            {teams.length === 0 ? <p>No teams found. Create one!</p> : null}
 
             {teams.map((team) => (
               <div key={team._id} className="team-item">
