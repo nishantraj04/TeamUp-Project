@@ -1,0 +1,23 @@
+{
+  "name": "teamup-project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm start --prefix team-up-backend\" \"npm run dev --prefix team-up-app\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nishantraj04/TeamUp-Project.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nishantraj04/TeamUp-Project/issues"
+  },
+  "homepage": "https://github.com/nishantraj04/TeamUp-Project#readme",
+  "dependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

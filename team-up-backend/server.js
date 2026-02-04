@@ -57,6 +57,16 @@ app.get('/api/teams', async (req, res) => {
     res.json(teams);
 });
 
+// CREATE A TEAM (Add this part!)
+app.post('/api/teams', async (req, res) => {
+    try {
+        const newTeam = new TeamModel(req.body);
+        await newTeam.save(); // Save to MongoDB
+        res.json(newTeam);    // Send back the saved team
+    } catch (err) {
+        res.status(500).json({ error: "Failed to save team" });
+    }
+});
 // START SERVER
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);

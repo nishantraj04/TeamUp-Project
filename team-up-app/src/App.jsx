@@ -6,7 +6,9 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [emailInput, setEmailInput] = useState("");
+  
   const [teams, setTeams] = useState([]);
+  const [newTeamName, setNewTeamName] = useState(""); // 🆕 State for the new team input
 
   // --- EFFECT ---
   useEffect(() => {
@@ -18,9 +20,7 @@ function App() {
       .then(response => {
         setTeams(response.data);
       })
-      .catch(error => {
-        console.error("Error connecting to server:", error);
-      });
+      .catch(error => console.error("Error connecting to server:", error));
   };
 
   // --- LOGIC ---
@@ -32,13 +32,33 @@ function App() {
 
   const handleJoin = (teamId) => {
     const updatedTeams = teams.map(team => {
-      // FIX: Use _id because MongoDB uses underscores!
       if (team._id === teamId) {
         return { ...team, members: team.members + 1, joined: true };
       }
       return team;
     });
     setTeams(updatedTeams);
+  };
+
+  // 🆕 FUNCTION: Create a Team
+  const handleCreateTeam = () => {
+    if (!newTeamName) return; // Don't create empty teams
+
+    const newTeamData = {
+      name: newTeamName,
+      status: "Recruiting", // Default status
+      members: 1,           // You are the first member
+      joined: true          // You automatically join your own team
+    };
+
+    // Send to Backend
+    axios.post('http://localhost:5000/api/teams', newTeamData)
+      .then(response => {
+        // Add the new team (from server) to our list immediately
+        setTeams([...teams, response.data]); 
+        setNewTeamName(""); // Clear the input box
+      })
+      .catch(error => console.error("Error creating team:", error));
   };
 
   return (
@@ -59,13 +79,24 @@ function App() {
       ) : (
         <div className="card">
           <h2>Welcome, {userEmail}!</h2>
-          <p>Available Teams:</p>
           
+          {/* 🆕 CREATE TEAM SECTION */}
+          <div style={{marginBottom: '20px', padding: '15px', border: '1px dashed #666', borderRadius: '8px'}}>
+            <h3>Create a New Team</h3>
+            <input 
+              type="text" 
+              placeholder="Team Name (e.g. Python Project)" 
+              value={newTeamName}
+              onChange={(e) => setNewTeamName(e.target.value)}
+            />
+            <button onClick={handleCreateTeam} style={{backgroundColor: '#28a745'}}>+ Create</button>
+          </div>
+
+          <p>Available Teams:</p>
           <div className="team-list">
             {teams.length === 0 ? <p>Loading teams...</p> : null}
 
             {teams.map((team) => (
-              /* FIX: Use _id for the key here too */
               <div key={team._id} className="team-item">
                 <h3>{team.name}</h3>
                 <p>Status: <span style={{color: 'green'}}>{team.status}</span></p>
@@ -74,7 +105,6 @@ function App() {
                 {team.joined ? (
                   <button disabled style={{backgroundColor: 'grey'}}>Joined ✅</button>
                 ) : (
-                  /* FIX: Pass _id to the function */
                   <button onClick={() => handleJoin(team._id)}>Join Team</button>
                 )}
               </div>
