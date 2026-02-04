@@ -6,21 +6,17 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [emailInput, setEmailInput] = useState("");
-  const [teams, setTeams] = useState([]); // Start with an empty list
+  const [teams, setTeams] = useState([]);
 
-  // --- EFFECT (The Bridge) ---
-  // This runs AUTOMATICALLY when the app loads
+  // --- EFFECT ---
   useEffect(() => {
     fetchTeams();
   }, []);
 
   const fetchTeams = () => {
-    // Call the Backend Server
     axios.get('http://localhost:5000/api/teams')
       .then(response => {
-        // When data arrives, save it to React memory
         setTeams(response.data);
-        console.log("Data received:", response.data);
       })
       .catch(error => {
         console.error("Error connecting to server:", error);
@@ -35,10 +31,9 @@ function App() {
   };
 
   const handleJoin = (teamId) => {
-    // Ideally, we would tell the backend to update here too!
-    // For now, we update the frontend only so you see the change immediately.
     const updatedTeams = teams.map(team => {
-      if (team.id === teamId) {
+      // FIX: Use _id because MongoDB uses underscores!
+      if (team._id === teamId) {
         return { ...team, members: team.members + 1, joined: true };
       }
       return team;
@@ -64,20 +59,23 @@ function App() {
       ) : (
         <div className="card">
           <h2>Welcome, {userEmail}!</h2>
-          <p>Available Teams (Loaded from Server):</p>
+          <p>Available Teams:</p>
           
           <div className="team-list">
             {teams.length === 0 ? <p>Loading teams...</p> : null}
 
             {teams.map((team) => (
-              <div key={team.id} className="team-item">
+              /* FIX: Use _id for the key here too */
+              <div key={team._id} className="team-item">
                 <h3>{team.name}</h3>
                 <p>Status: <span style={{color: 'green'}}>{team.status}</span></p>
                 <p>Members: {team.members}</p>
+                
                 {team.joined ? (
                   <button disabled style={{backgroundColor: 'grey'}}>Joined ✅</button>
                 ) : (
-                  <button onClick={() => handleJoin(team.id)}>Join Team</button>
+                  /* FIX: Pass _id to the function */
+                  <button onClick={() => handleJoin(team._id)}>Join Team</button>
                 )}
               </div>
             ))}
