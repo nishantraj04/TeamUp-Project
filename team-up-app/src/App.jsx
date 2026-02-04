@@ -11,15 +11,13 @@ function App() {
   const [newTeamName, setNewTeamName] = useState(""); 
 
   // --- EFFECT ---
-  // Only fetch teams AFTER the user has logged in
   useEffect(() => {
     if (isLoggedIn) {
       fetchTeams();
     }
-  }, [isLoggedIn]); // This runs whenever 'isLoggedIn' changes
+  }, [isLoggedIn]);
 
   const fetchTeams = () => {
-    // 🆕 CHANGE 1: We send the email to the backend so it knows who is asking
     axios.get(`https://teamup-project.onrender.com/api/teams?email=${userEmail}`)
       .then(response => {
         setTeams(response.data);
@@ -35,6 +33,7 @@ function App() {
   };
 
   const handleJoin = (teamId) => {
+    // Optimistic update for UI
     const updatedTeams = teams.map(team => {
       if (team._id === teamId) {
         return { ...team, members: team.members + 1, joined: true };
@@ -42,9 +41,9 @@ function App() {
       return team;
     });
     setTeams(updatedTeams);
+    // (Optional: You would send an API request here to save the join)
   };
 
-  // 🆕 FUNCTION: Create a Team
   const handleCreateTeam = () => {
     if (!newTeamName) return; 
 
@@ -53,10 +52,9 @@ function App() {
       status: "Recruiting",
       members: 1,           
       joined: true,
-      owner: userEmail      // 🆕 CHANGE 2: We stamp the team with your email
+      owner: userEmail      
     };
 
-    // Send to Backend
     axios.post('https://teamup-project.onrender.com/api/teams', newTeamData)
       .then(response => {
         setTeams([...teams, response.data]); 
@@ -65,53 +63,88 @@ function App() {
       .catch(error => console.error("Error creating team:", error));
   };
 
+  // --- RENDER ---
   return (
     <div className="container">
-      <h1>Team Up</h1>
+      
+      {/* HEADER (Always Visible) */}
+      <header>
+        <div className="logo">TeamUp.</div>
+        {isLoggedIn && <div style={{fontSize: '0.9rem', color: '#888'}}>{userEmail}</div>}
+      </header>
 
       {!isLoggedIn ? (
-        <div className="card">
-          <h2>Login</h2>
-          <input 
-            type="text" 
-            placeholder="Enter your email" 
-            value={emailInput}
-            onChange={(e) => setEmailInput(e.target.value)} 
-          />
-          <button onClick={handleLogin}>Login</button>
+        // --- LANDING PAGE VIEW ---
+        <div className="hero-section">
+          <h1 className="hero-title">Find. Connect. Build.</h1>
+          <p className="hero-subtitle">The platform for developers to find their perfect team.</p>
+          
+          <div className="login-card">
+            <input 
+              className="login-input"
+              type="text" 
+              placeholder="Enter your email to start" 
+              value={emailInput}
+              onChange={(e) => setEmailInput(e.target.value)} 
+            />
+            <button className="primary-btn" onClick={handleLogin}>Continue with Email</button>
+          </div>
+
+          <div className="features-grid">
+            <div className="feature-card">
+              <h3>🚀 Find Teammates</h3>
+              <p>Connect with builders and innovators.</p>
+            </div>
+            <div className="feature-card">
+              <h3>💡 Showcase Skills</h3>
+              <p>Highlight your projects and attract collaborators.</p>
+            </div>
+            <div className="feature-card">
+              <h3>🔥 Join Hackathons</h3>
+              <p>Team up for exciting competitions.</p>
+            </div>
+            <div className="feature-card">
+              <h3>🛠️ Build Together</h3>
+              <p>Turn ideas into reality with the right team.</p>
+            </div>
+          </div>
         </div>
       ) : (
-        <div className="card">
-          <h2>Welcome, {userEmail}!</h2>
-          <p style={{fontSize: "0.9rem", color: "#666"}}>You are viewing your private dashboard.</p>
-          
-          {/* CREATE TEAM SECTION */}
-          <div style={{marginBottom: '20px', padding: '15px', border: '1px dashed #666', borderRadius: '8px'}}>
-            <h3>Create a New Team</h3>
+        // --- DASHBOARD VIEW ---
+        <div className="dashboard-content">
+          <div className="dashboard-header">
+            <h2>Your Dashboard</h2>
+            <button className="primary-btn" style={{width: 'auto', background: '#333', color:'#fff'}} onClick={() => setIsLoggedIn(false)}>Logout</button>
+          </div>
+
+          <div className="create-team-box">
             <input 
+              className="login-input"
+              style={{marginBottom: 0}}
               type="text" 
-              placeholder="Team Name (e.g. Python Project)" 
+              placeholder="Team Name (e.g. AI Project)" 
               value={newTeamName}
               onChange={(e) => setNewTeamName(e.target.value)}
             />
-            <button onClick={handleCreateTeam} style={{backgroundColor: '#28a745'}}>+ Create</button>
+            <button className="primary-btn" style={{width: '150px'}} onClick={handleCreateTeam}>+ Create</button>
           </div>
 
-          <p>Your Teams:</p>
           <div className="team-list">
-            {teams.length === 0 ? <p>No teams found. Create one!</p> : null}
+            {teams.length === 0 ? <p style={{color: '#666'}}>No teams found. Start by creating one!</p> : null}
 
             {teams.map((team) => (
-              <div key={team._id} className="team-item">
+              <div key={team._id} className="team-card">
                 <h3>{team.name}</h3>
-                <p>Status: <span style={{color: 'green'}}>{team.status}</span></p>
-                <p>Members: {team.members}</p>
+                <span className="status-badge">{team.status}</span>
+                <p style={{color: '#888', marginTop: '10px'}}>Members: {team.members}</p>
                 
-                {team.joined ? (
-                  <button disabled style={{backgroundColor: 'grey'}}>Joined ✅</button>
-                ) : (
-                  <button onClick={() => handleJoin(team._id)}>Join Team</button>
-                )}
+                <div style={{marginTop: '20px'}}>
+                  {team.joined ? (
+                    <button className="primary-btn" disabled style={{opacity: 0.5, cursor: 'default'}}>Joined</button>
+                  ) : (
+                    <button className="primary-btn" onClick={() => handleJoin(team._id)}>Join Team</button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
