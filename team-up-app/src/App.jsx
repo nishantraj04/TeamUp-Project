@@ -18,6 +18,7 @@ function App() {
   }, [isLoggedIn]);
 
   const fetchTeams = () => {
+    // We send the email to the backend so it knows who is asking
     axios.get(`https://teamup-project.onrender.com/api/teams?email=${userEmail}`)
       .then(response => {
         setTeams(response.data);
@@ -41,7 +42,6 @@ function App() {
       return team;
     });
     setTeams(updatedTeams);
-    // (Optional: You would send an API request here to save the join)
   };
 
   const handleCreateTeam = () => {
@@ -52,7 +52,7 @@ function App() {
       status: "Recruiting",
       members: 1,           
       joined: true,
-      owner: userEmail      
+      owner: userEmail      // Stamping the team with your email
     };
 
     axios.post('https://teamup-project.onrender.com/api/teams', newTeamData)
@@ -66,6 +66,8 @@ function App() {
   // --- RENDER ---
   return (
     <div className="container">
+      {/* 🌀 THE BACKGROUND ANIMATION */}
+      <div className="background-spiral"></div>
       
       {/* HEADER (Always Visible) */}
       <header>
@@ -112,21 +114,21 @@ function App() {
       ) : (
         // --- DASHBOARD VIEW ---
         <div className="dashboard-content">
-          <div className="dashboard-header">
+          <div className="dashboard-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'30px'}}>
             <h2>Your Dashboard</h2>
-            <button className="primary-btn" style={{width: 'auto', background: '#333', color:'#fff'}} onClick={() => setIsLoggedIn(false)}>Logout</button>
+            <button className="primary-btn" style={{width: 'auto', background: '#333', color:'#fff', padding: '8px 16px'}} onClick={() => setIsLoggedIn(false)}>Logout</button>
           </div>
 
-          <div className="create-team-box">
+          <div className="create-team-box" style={{background: 'var(--card-bg)', border: '1px solid var(--border-color)', padding: '20px', borderRadius: '8px', display: 'flex', gap: '10px', marginBottom: '40px', flexWrap: 'wrap'}}>
             <input 
               className="login-input"
-              style={{marginBottom: 0}}
+              style={{marginBottom: 0, flex: 1, minWidth: '200px'}}
               type="text" 
               placeholder="Team Name (e.g. AI Project)" 
               value={newTeamName}
               onChange={(e) => setNewTeamName(e.target.value)}
             />
-            <button className="primary-btn" style={{width: '150px'}} onClick={handleCreateTeam}>+ Create</button>
+            <button className="primary-btn" style={{width: 'auto', minWidth: '100px'}} onClick={handleCreateTeam}>+ Create</button>
           </div>
 
           <div className="team-list">
@@ -135,7 +137,7 @@ function App() {
             {teams.map((team) => (
               <div key={team._id} className="team-card">
                 <h3>{team.name}</h3>
-                <span className="status-badge">{team.status}</span>
+                <span className="status-badge" style={{display: 'inline-block', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', background: 'rgba(50, 145, 255, 0.1)', color: 'var(--accent-color)', marginBottom: '10px'}}>{team.status}</span>
                 <p style={{color: '#888', marginTop: '10px'}}>Members: {team.members}</p>
                 
                 <div style={{marginTop: '20px'}}>
