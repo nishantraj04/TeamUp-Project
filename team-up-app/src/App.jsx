@@ -16,7 +16,7 @@ function App() {
   }, []);
 
   const fetchTeams = () => {
-    axios.get('http://localhost:5000/api/teams')
+   axios.get('https://teamup-project.onrender.com/api/teams')
       .then(response => {
         setTeams(response.data);
       })
@@ -52,7 +52,7 @@ function App() {
     };
 
     // Send to Backend
-    axios.post('http://localhost:5000/api/teams', newTeamData)
+    axios.post('https://teamup-project.onrender.com/api/teams', newTeamData)
       .then(response => {
         // Add the new team (from server) to our list immediately
         setTeams([...teams, response.data]); 
