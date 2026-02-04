@@ -1,28 +1,36 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import './App.css'
+import { FiGrid, FiUsers, FiBriefcase, FiLogOut } from 'react-icons/fi'
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userEmail, setUserEmail] = useState("");
   const [emailInput, setEmailInput] = useState("");
   
+  // --- MODAL STATE ---
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [profileData, setProfileData] = useState({
+    username: "",
+    bio: "",
+    gender: "Select gender"
+  });
+
   const [teams, setTeams] = useState([]);
-  const [newTeamName, setNewTeamName] = useState(""); 
 
   // --- EFFECT ---
   useEffect(() => {
     if (isLoggedIn) {
+      setShowProfileModal(true); 
       fetchTeams();
     }
   }, [isLoggedIn]);
 
   const fetchTeams = () => {
     axios.get(`https://teamup-project.onrender.com/api/teams?email=${userEmail}`)
-      .then(response => {
-        setTeams(response.data);
-      })
-      .catch(error => console.error("Error connecting to server:", error));
+      .then(response => setTeams(response.data))
+      .catch(error => console.error("Error:", error));
   };
 
   const handleLogin = () => {
@@ -31,119 +39,189 @@ function App() {
     setIsLoggedIn(true);
   };
 
-  const handleJoin = (teamId) => {
-    const updatedTeams = teams.map(team => {
-      if (team._id === teamId) {
-        return { ...team, members: team.members + 1, joined: true };
-      }
-      return team;
-    });
-    setTeams(updatedTeams);
-  };
+  // --- HELPER: RENDER SIDEBAR ---
+  const renderSidebar = () => (
+    <div className="sidebar">
+      <div>
+        <div className="nav-label" style={{fontSize: '1.2rem', color:'#fff', marginBottom:'30px'}}>
+           <span style={{color: 'var(--accent-color)'}}>⚡</span> TEAM UP
+        </div>
+        
+        <div className="nav-section">
+          <div className="nav-label">Main</div>
+          <div className="nav-item active"><FiGrid /> Dashboard</div>
+          <div className="nav-item"><FiUsers /> Network</div>
+        </div>
 
-  const handleCreateTeam = () => {
-    if (!newTeamName) return; 
-    const newTeamData = {
-      name: newTeamName,
-      status: "Recruiting",
-      members: 1,           
-      joined: true,
-      owner: userEmail      
-    };
-    axios.post('https://teamup-project.onrender.com/api/teams', newTeamData)
-      .then(response => {
-        setTeams([...teams, response.data]); 
-        setNewTeamName(""); 
-      })
-      .catch(error => console.error("Error creating team:", error));
-  };
+        <div className="nav-section">
+          <div className="nav-label">Gigs</div>
+          <div className="nav-item"><FiBriefcase /> Browse Gigs</div>
+          <div className="nav-item"><FiBriefcase /> My Gigs</div>
+        </div>
+      </div>
 
-  return (
-    <div className="container">
-      {/* 🌀 SPIRAL ANIMATION BACKGROUND */}
-      <div className="background-spiral"></div>
+      <div className="user-profile-mini">
+        <div className="avatar-circle">{userEmail.charAt(0).toUpperCase()}</div>
+        <div style={{fontSize: '0.85rem'}}>
+          <div style={{color: '#fff', fontWeight: '600'}}>User</div>
+          <div style={{color: '#666'}}>{userEmail}</div>
+        </div>
+        <FiLogOut style={{marginLeft: 'auto', cursor: 'pointer'}} onClick={() => setIsLoggedIn(false)} />
+      </div>
+    </div>
+  );
 
-      <header>
-        <div className="logo">TeamUp.</div>
-        {isLoggedIn && <div style={{fontSize: '0.9rem', color: '#888'}}>{userEmail}</div>}
-      </header>
-
-      {!isLoggedIn ? (
-        <div className="hero-section">
-          <h1 className="hero-title">Find. Connect. Build.</h1>
-          <p className="hero-subtitle">The platform for developers to find their perfect team.</p>
+  // --- HELPER: RENDER MODAL ---
+  const renderProfileModal = () => (
+    <div className="modal-overlay">
+      <div className="modal-card">
+        {/* HEADER */}
+        <div className="modal-header">
+          <h2>Complete Your Profile</h2>
           
-          <div className="login-card">
-            <input 
-              className="login-input"
-              type="text" 
-              placeholder="Enter your email to start" 
-              value={emailInput}
-              onChange={(e) => setEmailInput(e.target.value)} 
-            />
-            <button className="primary-btn" onClick={handleLogin}>Continue with Email</button>
+          <div className="stepper">
+            <div className={`step ${currentStep >= 1 ? 'active' : ''}`}>
+              <div className="step-number">1</div>
+              <div>Profile</div>
+            </div>
+            <div className={`step ${currentStep >= 2 ? 'active' : ''}`}>
+              <div className="step-number">2</div>
+              <div>Education</div>
+            </div>
+            <div className={`step ${currentStep >= 3 ? 'active' : ''}`}>
+              <div className="step-number">3</div>
+              <div>Skills</div>
+            </div>
           </div>
+          <div style={{display:'flex', gap:'10px', marginTop:'10px'}}>
+             <div className="step-line" style={{background: currentStep >= 1 ? 'var(--accent-color)' : '#333'}}></div>
+             <div className="step-line" style={{background: currentStep >= 2 ? 'var(--accent-color)' : '#333'}}></div>
+             <div className="step-line" style={{background: currentStep >= 3 ? 'var(--accent-color)' : '#333'}}></div>
+          </div>
+        </div>
 
-          {/* RESPONSIVE FEATURE GRID */}
-          <div className="features-grid">
-            <div className="feature-card">
-              <h3>🚀 Find Teammates</h3>
-              <p>Connect with builders and innovators.</p>
+        {/* BODY */}
+        <div style={{padding: '30px'}}>
+          {currentStep === 1 && (
+            <>
+              <div className="form-group">
+                <label style={{display:'block', marginBottom:'8px', fontSize:'0.9rem', color:'#ccc'}}>Username</label>
+                <input 
+                  className="form-input" 
+                  type="text" 
+                  placeholder="Username"
+                  value={profileData.username} 
+                  onChange={(e) => setProfileData({...profileData, username: e.target.value})}
+                />
+              </div>
+              <div className="form-group">
+                <label style={{display:'block', marginBottom:'8px', fontSize:'0.9rem', color:'#ccc'}}>Bio</label>
+                <textarea 
+                  className="form-textarea" 
+                  placeholder="Bio (minimum 10 characters)"
+                  value={profileData.bio} 
+                  onChange={(e) => setProfileData({...profileData, bio: e.target.value})}
+                ></textarea>
+              </div>
+              <div className="form-group">
+                <label style={{display:'block', marginBottom:'8px', fontSize:'0.9rem', color:'#ccc'}}>Gender</label>
+                <select className="form-select">
+                  <option>Select gender</option>
+                  <option>Male</option>
+                  <option>Female</option>
+                  <option>Other</option>
+                </select>
+              </div>
+            </>
+          )}
+
+          {currentStep === 2 && <p style={{color:'#888'}}>Education details form goes here...</p>}
+          {currentStep === 3 && <p style={{color:'#888'}}>Skills & Links form goes here...</p>}
+        </div>
+
+        {/* FOOTER */}
+        <div style={{padding: '20px 30px', borderTop: '1px solid #222', display: 'flex', justifyContent: 'flex-end'}}>
+          <button className="next-btn" onClick={() => {
+            if (currentStep < 3) setCurrentStep(currentStep + 1);
+            else setShowProfileModal(false); // Close on finish
+          }}>
+            {currentStep === 3 ? "Finish" : "Next"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // --- MAIN RENDER ---
+  return (
+    <>
+      {!isLoggedIn ? (
+        // 🌀 LANDING PAGE (RESTORED)
+        <div className="landing-container">
+          <div className="background-spiral"></div>
+          
+          <header className="landing-header">
+            <div className="landing-logo">TeamUp.</div>
+          </header>
+
+          <div className="hero-section">
+            <h1 className="hero-title">Find. Connect. Build.</h1>
+            <p className="hero-subtitle">The platform for developers to find their perfect team.</p>
+            
+            <div className="login-card-landing">
+              <input 
+                className="login-input"
+                type="text" 
+                placeholder="Enter your email to start" 
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)} 
+              />
+              <button className="primary-btn" onClick={handleLogin}>Continue with Email</button>
             </div>
-            <div className="feature-card">
-              <h3>💡 Showcase Skills</h3>
-              <p>Highlight your projects and attract collaborators.</p>
-            </div>
-            <div className="feature-card">
-              <h3>🔥 Join Hackathons</h3>
-              <p>Team up for exciting competitions.</p>
-            </div>
-            <div className="feature-card">
-              <h3>🛠️ Build Together</h3>
-              <p>Turn ideas into reality with the right team.</p>
+
+            <div className="features-grid">
+              <div className="feature-card">
+                <h3>🚀 Find Teammates</h3>
+                <p style={{color:'#888', fontSize:'0.9rem'}}>Connect with builders and innovators.</p>
+              </div>
+              <div className="feature-card">
+                <h3>💡 Showcase Skills</h3>
+                <p style={{color:'#888', fontSize:'0.9rem'}}>Highlight your projects and attract collaborators.</p>
+              </div>
+              <div className="feature-card">
+                <h3>🔥 Join Hackathons</h3>
+                <p style={{color:'#888', fontSize:'0.9rem'}}>Team up for exciting competitions.</p>
+              </div>
             </div>
           </div>
         </div>
       ) : (
-        <div className="dashboard-content">
-          <div className="dashboard-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'30px'}}>
-            <h2>Your Dashboard</h2>
-            <button className="primary-btn" style={{width: 'auto', background: '#333', color:'#fff', padding: '8px 16px'}} onClick={() => setIsLoggedIn(false)}>Logout</button>
-          </div>
+        // 📊 DASHBOARD (NEW DESIGN)
+        <div className="dashboard-container">
+          {renderSidebar()}
+          
+          <div className="main-content">
+            <header style={{marginBottom: '40px'}}>
+              <h1 style={{margin: 0}}>Good evening, 👋</h1>
+              <p style={{color: '#666', marginTop: '5px'}}>Ready to create something amazing today?</p>
+            </header>
 
-          <div className="create-team-box" style={{background: 'var(--card-bg)', border: '1px solid var(--border-color)', padding: '20px', borderRadius: '8px', display: 'flex', gap: '10px', marginBottom: '40px', flexWrap: 'wrap'}}>
-            <input 
-              className="login-input"
-              style={{marginBottom: 0, flex: 1, minWidth: '200px'}}
-              type="text" 
-              placeholder="Team Name (e.g. AI Project)" 
-              value={newTeamName}
-              onChange={(e) => setNewTeamName(e.target.value)}
-            />
-            <button className="primary-btn" style={{width: 'auto', minWidth: '100px'}} onClick={handleCreateTeam}>+ Create</button>
-          </div>
-
-          <div className="team-list">
-            {teams.length === 0 ? <p style={{color: '#666'}}>No teams found. Start by creating one!</p> : null}
-
-            {teams.map((team) => (
-              <div key={team._id} className="team-card">
-                <h3>{team.name}</h3>
-                <span className="status-badge" style={{display: 'inline-block', padding: '4px 8px', borderRadius: '4px', fontSize: '0.8rem', background: 'rgba(50, 145, 255, 0.1)', color: 'var(--accent-color)', marginBottom: '10px'}}>{team.status}</span>
-                <p style={{color: '#888', marginTop: '10px'}}>Members: {team.members}</p>
-                <div style={{marginTop: '20px'}}>
-                  {team.joined ? (
-                    <button className="primary-btn" disabled style={{opacity: 0.5, cursor: 'default'}}>Joined</button>
-                  ) : (
-                    <button className="primary-btn" onClick={() => handleJoin(team._id)}>Join Team</button>
-                  )}
-                </div>
+            <div style={{display: 'flex', gap: '20px'}}>
+              <div style={{background: '#111', padding: '20px', borderRadius: '12px', flex: 1, border: '1px solid #222'}}>
+                  <h3 style={{margin: 0, fontSize: '2rem'}}>0</h3>
+                  <p style={{margin: 0, color: '#666'}}>Active Gigs</p>
               </div>
-            ))}
+              <div style={{background: '#111', padding: '20px', borderRadius: '12px', flex: 1, border: '1px solid #222'}}>
+                  <h3 style={{margin: 0, fontSize: '2rem'}}>0%</h3>
+                  <p style={{margin: 0, color: '#666'}}>Profile Match</p>
+              </div>
+            </div>
           </div>
+
+          {showProfileModal && renderProfileModal()}
         </div>
       )}
-    </div>
+    </>
   )
 }
 
